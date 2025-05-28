@@ -10,7 +10,8 @@ const suffixs = {
         },
         {
         	"non-final": "ㅂ니다",
-            "final": "습니다"
+            "final": "습니다",
+            jondae: true
         }
     ],
     "연결": [
@@ -21,10 +22,51 @@ const suffixs = {
     ]
 }
 
+const josas = {
+	"주격": [
+	    {
+		    "non-final": "가",
+		    "final": "이"
+		},
+		{
+		    "non-final": "께서",
+		    "final": "께서",
+		    jondae: true
+		}
+    ],
+    "목적격": [
+        {
+		    "non-final": "를",
+		    "final": "을"
+		}
+    ],
+    "보조사": [
+        {
+        	"non-final": "는",
+            "final": "은"
+        },
+        {
+        	"non-final": "만",
+            "final": "만"
+        },
+        {
+        	"non-final": "도",
+            "final": "도"
+        }
+    ],
+}
+
 const words = {
 	"대명사": [
 	    {
 		    word: "내"
+		},
+		{
+		    word: "저희",
+		    jondae: true
+		},
+		{
+		    word: "우리"
 		}
 	],
 	"명사": [
@@ -34,16 +76,24 @@ const words = {
     ],
     "동사": [
         {
-        	word: "먹"
+        	word: "먹",
+            need: 2
          },
          {
-         	word: "달리"
+         	word: "달리",
+             need: 1
          },
          {
-         	word: "배우"
+         	word: "배우",
+             need: 2
          },
          {
-         	word: "모으"
+         	word: "모으",
+             need: 2
+         },
+         {
+         	word: "하",
+             need: 2
          }
      ]
 }
@@ -55,10 +105,25 @@ let sentence = "";
 sentenceEl.innerText = sentence;
 
 function makeSentence() {
-	const word1 = getWord("동사").word;
-	const suffix1 = hasFinalSound(getLastStr(word1)) ? getSuffix()["final"] : getSuffix()["non-final"];
+	const verb = getWord("동사");
 	
-	sentence = sumKoreanStr(word1, suffix1);
+	const nounSelector = Math.floor(Math.random() * 2);
+	const nounType = nounSelector === 0 ? "대명사" : "명사";
+	const noun = getWord(nounType);
+	const isJondae = noun.jondae;
+	
+	const object = getWord("명사");
+	const isJondae2 = object.jondae;
+	
+	const josa2 = hasFinalSound(getLastStr(object.word)) ? getJosa("목적격")["final"] : getJosa("목적격")["non-final"];
+	
+	const josaSelector = Math.floor(Math.random() * 2);
+	const josaType = josaSelector === 0 && noun.word != "내" ? "보조사" : "주격";
+	const josa = hasFinalSound(getLastStr(noun.word)) ? getJosa(josaType)["final"] : getJosa(josaType)["non-final"];
+	
+	const suffix = hasFinalSound(getLastStr(verb.word)) ? getSuffix("종결", isJondae)["final"] : getSuffix("종결", isJondae)["non-final"];
+	
+	sentence = sumKoreanStr(noun.word, josa) + " " + (verb.need >= 2 ? sumKoreanStr(object.word, josa2) : "" )+ " " + sumKoreanStr(verb.word, suffix);
 	sentenceEl.innerText = sentence;
 }
 
@@ -68,10 +133,32 @@ function getWord(part) {
 	return words[part][index];
 }
 
-function getSuffix() {
-	const index = Math.floor(suffixs["종결"].length * Math.random());
+function getSuffix(type, isJondae=false) {
+	let suffix;
 	
-	return suffixs["종결"][index];
+	while(1){
+	    const index = Math.floor(suffixs[type].length * Math.random());
+	    suffix =  suffixs[type][index];
+	
+	    if(!isJondae && !suffix.jondae) break;
+	    if(isJondae && suffix.jondae) break;
+	}
+	
+	return suffix;
+}
+
+function getJosa(type, isJondae=false) {
+	let josa;
+	
+	while(1){
+	    const index = Math.floor(josas[type].length * Math.random());   
+	    josa =  josas[type][index];
+	
+	    if(!isJondae && !josa.jondae) break;
+	    if(isJondae && josa.jondae) break;
+	}
+	
+	return josa;
 }
 
 function hasFinalSound(str) {
